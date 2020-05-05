@@ -1,0 +1,21 @@
+@startuml
+rectangle MSocketServer
+rectangle MSocket
+rectangle "(MMock|MUnix)SocketServer" as MMockSocketServer
+rectangle "(MMock|MUnix)Socket" as MMockSocket
+rectangle Main
+rectangle AppServer
+rectangle AppServerSession
+rectangle Executor
+rectangle ExecutorRoom
+
+MMockSocketServer -up-|> MSocketServer
+MMockSocket -up-|> MSocket
+
+MMockSocketServer <-right- MMockSocket
+
+Main <-down- AppServer
+AppServer <-right- AppServerSession
+AppServer <-down- MSocketServer
+AppServerSession <-down- MSocket
+@enduml
