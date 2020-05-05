@@ -12,9 +12,9 @@ class Executor
   # timeout: Number
   def initialize(args)
     @cmd = args[:cmd]
-    @stdin = args[:stdin] || '/dev/null'
-    @stdout = args[:stdout] || '/dev/null'
-    @stderr = args[:stderr] || '/dev/null'
+    @stdin = args[:stdin] || File::NULL
+    @stdout = args[:stdout] || File::NULL
+    @stderr = args[:stderr] || File::NULL
     @timeout = args[:timeout] || 5
     raise ArgumentError unless @cmd
     @status = nil
@@ -35,7 +35,7 @@ class Executor
     @status = nil
   end
 
-  def execute(noblock = false, &onfinished = nil)
+  def execute(noblock = false, &onfinished)
     @status = nil
 
     # execute command
@@ -43,7 +43,7 @@ class Executor
       # 実行ユーザ変更の機能追加を考慮してspawnでは無い
       exec(@cmd,
         in: @stdin,
-        out: @stdout
+        out: @stdout,
         err: @stderr)
     end
 
@@ -51,14 +51,12 @@ class Executor
     # timeout thread
     t1 = Thread.start do
       sleep @timeout
-      t2.stop  # Ruby does not have race like javascript Promise.race
-      t2.exit
+      t2.exit  # Ruby does not have race like javascript Promise.race
     end
     # waitpid thread
     t2 = Thread.start do
       pid, s = Process.waitpid2(pid)
       @status = s
-      t1.stop
       t1.exit
     end
 
@@ -67,9 +65,9 @@ class Executor
       [t1, t2].each{|t| t.join }
 
       # finalize
-      @stdin.close if @stdin.respond_to(:close)
-      @stdout.close if @stdout.respond_to(:close)
-      @stderr.close if @stderr.respond_to(:close)
+      @stdin.close if @stdin.respond_to?(:close)
+      @stdout.close if @stdout.respond_to?(:close)
+      @stderr.close if @stderr.respond_to?(:close)
       
       # callback if onfinished is not nil
       onfinished.call(@status) if onfinished

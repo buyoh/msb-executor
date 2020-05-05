@@ -7,11 +7,7 @@ class InteractiveExecutorController
     raise ArgumentError if executor.nil?
     @executor = executor
     @in_rd, @in_wt = IO.pipe
-    @out_rd, @out_wt = IO.pipe 
-    @in_rd.close_write
-    @in_wt.close_read
-    @out_rd.close_write
-    @out_wt.close_read
+    @out_rd, @out_wt = IO.pipe
     @pid = nil
   end
 
