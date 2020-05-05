@@ -98,5 +98,3 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 #=end
 end
-
-require_relative './spec_user.rb'
