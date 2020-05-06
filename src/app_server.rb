@@ -30,7 +30,7 @@ class AppServer
         begin
           d = JSON.parse(data)
         rescue
-          socket.post '{"stat":false}'
+          socket.post '{"accept":false}'
         end
         session.handle d if d
       end
