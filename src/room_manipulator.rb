@@ -28,6 +28,12 @@ class RoomManipulator
     @queue << [:run_q, command, {}]
   end
 
+  def filesize_imm(path)
+    @room.chdir do
+      # TODO: impl me
+    end
+  end
+
   def read_imm(path, length, offset = 0, opt = {})
     # ファイルが大きいなら圧縮して送った方が良さげ
     d = nil

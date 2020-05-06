@@ -83,9 +83,18 @@ class AppServerSession
     li = data['run']
     return [false, 'illegal arguments'] unless li.is_a? Array
     li.each do |elem|
-      elem[:run]
+      case elem['key']
+      when 'write'
+        path = elem['path']
+        # next if path=~/\.\./ # bad workaround because it does not notify invallid
+        @manipulator.write path, elem['data']
+      when 'cmd'
+        @manipulator.run elem['cmd']
+      else
+        next  # ignore unkwown method
+      end
     end
-    return true
+    return true  # notify recieved commands has been accepted, not result of commands
   end
 
   # exec
