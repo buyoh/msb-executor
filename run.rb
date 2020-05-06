@@ -11,7 +11,8 @@ elsif subcmd == 'setup'
   system 'bundle install'
 
 elsif subcmd == 'test'
-  system 'bundle exec rspec'
+  aa = argv & ['--only-failures']
+  system 'bundle exec rspec ' + aa*' '
 
 elsif subcmd == 'help'
   puts 'subcommand list = [start, setup, test, help]'

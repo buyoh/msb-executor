@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'tmpdir'
 
 # -----------------------------------------------------------------------------
 # setup Executor workdirectory
@@ -6,16 +7,18 @@ require 'fileutils'
 # 
 class ExecutorRoom
 
-  def initialize(dir)
-    @dir = dir
-    @istempdir = false
-    FileUtils.makedirs @dir
+  def initialize()
+    workdir = Dir.tmpdir+'/maisandbox-x'  # TODO: refactor this
+    FileUtils.mkdir_p workdir
+    @dir = Dir.mktmpdir('ex_', workdir)
   end
 
-  def finalize
-    if @istempdir
-      FileUtis.rm_rf @dir
-    end
+  def destroy
+    FileUtils.rm_rf @dir, secure: true
+  end
+
+  def dir
+    @dir
   end
 
   def chdir(&pc)
@@ -25,14 +28,14 @@ class ExecutorRoom
   end
 
   def self.start(*args, &pc)
-    this = initialize(*args)
+    this = ExecutorRoom.new(*args)
     this.instance_eval do
       chdir do
         Object.new.instance_eval do
           pc.call
         end
       end
-      finalize
+      destroy
     end
   end
 
