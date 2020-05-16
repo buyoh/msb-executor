@@ -2,6 +2,7 @@ require_src 'app_server.rb'
 require_src 'msocket/mock/mock_socket_server.rb'
 
 RSpec.describe 'AppServer' do
+  # note: 単体テストでは無い。
   
   it 'not json' do
     mss = MMockSocketServer.new

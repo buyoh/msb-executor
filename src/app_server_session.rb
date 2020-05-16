@@ -1,12 +1,13 @@
 require_relative './executor/executor_room.rb'
-require_relative './room_manipulator.rb'
+require_relative './commander.rb'
 
-class AppServerSession
+class AppServerSessionImpl
 
-  def initialize
+  def initialize(executorRoom_class, commander_class)
+    @executorRoom_class = executorRoom_class
+    @commander_class = commander_class
     @onpost = nil
-    # @room = nil
-    @manipulator = nil
+    @room = nil
   end
 
   # handler posting to client
@@ -17,9 +18,9 @@ class AppServerSession
   #
 
   def close_room
-    if @manipulator
-      @manipulator.close
-      @manipulator = nil
+    if @room
+      @room.close
+      @room = nil
     end
   end
 
@@ -34,7 +35,7 @@ class AppServerSession
     act = data['act']
     data['id'] ||= rand(1e9.to_i).to_s
 
-    if ['ping'].include?(act)
+    if AppServerSessionImpl.handleable?(act)
       accepted, reason = __send__("handle_#{act}", data)
       if accepted == true
         @onpost.call({
@@ -54,10 +55,14 @@ class AppServerSession
     end
   end
 
+  def self.handleable?(act)
+    ['ping', 'openroom', 'closeroom', 'commands', 'run', 'run_interactive'].include?(act)
+  end
+
   # ping (for test)
   def handle_ping(data)
     @onpost.call({
-      accept: true, id: data['id']
+      accept: true, id: data['id'],
       date: Time.now.to_i
     })
     return nil
@@ -65,15 +70,14 @@ class AppServerSession
 
   # room for executor
   def handle_openroom(data)
-    return [false, 'illegal states'] if @manipulator
-    room = ExecutorRoom.new
-    @manipulator = RoomManipulator.new(room)
+    return [false, 'illegal states'] if @room
+    room = @executorRoom_class.new
     return true
   end
 
   # room for executor
   def handle_closeroom(data)
-    return [false, 'illegal states'] if @manipulator
+    return [false, 'illegal states'] if @room
     close_room
     return true
   end
@@ -82,19 +86,9 @@ class AppServerSession
   def handle_commands(data)
     li = data['run']
     return [false, 'illegal arguments'] unless li.is_a? Array
-    li.each do |elem|
-      case elem['key']
-      when 'write'
-        path = elem['path']
-        # next if path=~/\.\./ # bad workaround because it does not notify invallid
-        @manipulator.write path, elem['data']
-      when 'cmd'
-        @manipulator.run elem['cmd']
-      else
-        next  # ignore unkwown method
-      end
-    end
-    return true  # notify recieved commands has been accepted, not result of commands
+    commander = @commander_class.new(@room)
+    commander.command(li)
+    return true  # TODO: tekitou
   end
 
   # exec
@@ -109,3 +103,10 @@ class AppServerSession
   end
 
 end
+
+class AppServerSession < AppServerSessionImpl
+  def initialize
+    super ExecutorRoom, Commander
+  end
+end
+

@@ -17,17 +17,7 @@ class RoomManipulator
     @room.destroy
     @room = nil
   end
-
-  # push to queue
-  def write(path, string, opt = {})
-    @queue << [:write_q, path, string, opt]
-  end
-
-  # push to queue
-  def run(command)
-    @queue << [:run_q, command, {}]
-  end
-
+  
   def filesize_imm(path)
     @room.chdir do
       # TODO: impl me
@@ -43,31 +33,27 @@ class RoomManipulator
     d
   end
 
-  def flush
+  # manipulation method
+  def write(path, string, opt)
     @room.chdir do
-      while !@queue.empty?
-        elem = @queue.shift
-        m = elem.shift
-        __call__ m, *elem
-      end
+      z = IO.write(path, string, opt)
+      @result << z
     end
   end
+  private :write
 
-  def write_q(path, string, opt)
-    z = IO.write(path, string, opt)
-    @result << z
+  # manipulation method
+  def run(command, opt)
+    @room.chdir do
+      e = Executor.new({
+        cmd: command,
+        stdout: ['stdout.log', 'a'],
+        stderr: ['stderr.log', 'a']
+      }.merge(opt))
+      _, stt = e.execute
+      @result << e.exitstatus
+    end
   end
-  private :write_q
-
-  def run_q(command, opt)
-    e = Executor.new({
-      cmd: command,
-      stdout: ['stdout.log', 'a'],
-      stderr: ['stderr.log', 'a']
-    }.merge(opt))
-    _, stt = e.execute
-    @result << e.exitstatus
-  end
-  private :run_q
+  private :run
 
 end

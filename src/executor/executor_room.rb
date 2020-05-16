@@ -23,7 +23,7 @@ class ExecutorRoom
 
   def chdir(&pc)
     Dir.chdir @dir do
-      pc.call
+      pc.call self
     end
   end
 

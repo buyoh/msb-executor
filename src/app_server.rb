@@ -1,9 +1,10 @@
 require 'json'
 require_relative './app_server_session.rb'
 
-class AppServer
+class AppServerImpl
 
-  def initialize()
+  def initialize(appServerSession_class)
+    @appServerSession_class = appServerSession_class
     @socketserver = nil
     @sessions = []
   end
@@ -14,7 +15,7 @@ class AppServer
 
     @socketserver = socketserver
     @socketserver.onconnect do |socket|
-      session = AppServerSession.new
+      session = @appServerSession_class.new
 
       session.onpost do |data|
         socket.post JSON.generate(data)
@@ -38,4 +39,10 @@ class AppServer
     end
   end
 
+end
+
+class AppServer < AppServerImpl
+  def initialize
+    super(AppServerSession)
+  end
 end
